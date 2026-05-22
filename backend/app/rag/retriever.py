@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from app.rag.vector_store import retrieve_semantic_chunks
 import re
 
 
@@ -91,6 +92,15 @@ def retrieve_relevant_chunks(
 ) -> list[dict]:
     base_date = extract_base_date_from_chunks(chunks)
     target_time = extract_time_from_question(question, base_date)
+    semantic_results = retrieve_semantic_chunks(
+       chunks=chunks,
+       question=question,
+       top_k=top_k,
+  )
+    semantic_score_by_chunk_id = {
+    item["chunk_id"]: item["semantic_score"]
+    for item in semantic_results
+}
     
     question_words = set(
         word.lower().strip(".,?!:;")
@@ -113,11 +123,12 @@ def retrieve_relevant_chunks(
             severity_score = 2
         elif chunk["log_level"] == "WARN":
             severity_score = 1
+            
+        semantic_score = semantic_score_by_chunk_id.get(chunk["chunk_id"], 0)    
 
         time_score = calculate_time_score(chunk, target_time)
 
-        total_score = keyword_score + severity_score + time_score
-
+        total_score = keyword_score + severity_score + time_score + semantic_score
         scored_chunks.append({
             **chunk,
             "retrieval_score": total_score,
@@ -125,6 +136,7 @@ def retrieve_relevant_chunks(
                 "keyword_score": keyword_score,
                 "severity_score": severity_score,
                 "time_score": time_score,
+                "semantic_score": semantic_score,
             }
         })
 
