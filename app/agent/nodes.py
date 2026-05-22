@@ -1,5 +1,6 @@
 from app.rag.ingest import parse_log_lines, build_log_chunks
 from app.rag.retriever import retrieve_relevant_chunks
+from app.services.llm import generate_llm_rca, is_llm_enabled
 
 
 def analyze_error_pattern(relevant_chunks: list[dict]) -> dict:
@@ -132,7 +133,7 @@ def generate_rca_report(
 
     suggested_fix = list(dict.fromkeys(suggested_fix))
 
-    return {
+    base_report = {
         "incident_summary": "The service failure appears to be caused by errors found in the retrieved log window.",
         "probable_root_cause": analysis["probable_root_cause"],
         "detected_patterns": analysis["detected_patterns"],
@@ -150,6 +151,14 @@ def generate_rca_report(
         ],
         "confidence_score": analysis["confidence_score"],
     }
+
+    llm_enabled = is_llm_enabled()
+    llm_summary = generate_llm_rca(base_report) if llm_enabled else ""
+
+    base_report["llm_enabled"] = llm_enabled
+    base_report["llm_rca_report"] = llm_summary
+
+    return base_report
 
 
 def parse_and_chunk_logs_node(state: dict) -> dict:
@@ -298,6 +307,7 @@ def search_docs_node(state: dict) -> dict:
         "docs_context": docs_context,
         "workflow_trace": workflow_trace,
     }
+
 
 def generate_report_node(state: dict) -> dict:
     rca_report = generate_rca_report(

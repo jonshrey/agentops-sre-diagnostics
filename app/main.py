@@ -1,3 +1,5 @@
+from sympy import true
+
 from app.rag.ingest import parse_log_lines
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -51,6 +53,8 @@ async def diagnose_logs(
         "docs_context": graph_result.get("docs_context", []),
         "external_context_used": rca_report["external_context_used"],
         "docs_findings": rca_report["docs_findings"],
+        "llm_enabled": rca_report["llm_enabled"],
+        "llm_rca_report": rca_report["llm_rca_report"],
 
         
         "incident_summary": rca_report["incident_summary"],
