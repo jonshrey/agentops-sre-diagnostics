@@ -4,6 +4,7 @@ from app.rag.ingest import parse_log_lines
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from app.agent.graph import run_diagnostics_graph
+from app.schemas.diagnose import DiagnoseResponse
 
 app = FastAPI(
     title="AgentOps",
@@ -24,7 +25,7 @@ app.add_middleware(
 def health_check():
     return {"status": "ok"}
 
-@app.post("/diagnose")
+@app.post("/diagnose", response_model=DiagnoseResponse)
 async def diagnose_logs(
     question: str = Form(...),
     log_file: UploadFile = File(...),
