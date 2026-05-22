@@ -47,3 +47,52 @@ def analyze_error_pattern(relevant_chunks: list[dict]) -> dict:
         "probable_root_cause": probable_root_cause,
         "confidence_score": confidence_score,
     }
+    
+def generate_rca_report(
+    analysis: dict,
+    relevant_chunks: list[dict]
+) -> dict:
+    evidence_lines = []
+
+    for chunk in relevant_chunks:
+        evidence_lines.append({
+            "chunk_id": chunk["chunk_id"],
+            "line_range": f"{chunk['line_start']}-{chunk['line_end']}",
+            "timestamp_range": f"{chunk['timestamp_start']} to {chunk['timestamp_end']}",
+            "log_level": chunk["log_level"],
+            "service": chunk["service"],
+            "evidence": chunk["chunk_text"],
+            "retrieval_score": chunk.get("retrieval_score", 0),
+        })
+
+    timeline = []
+
+    for chunk in relevant_chunks:
+        timeline.append({
+            "timestamp_start": chunk["timestamp_start"],
+            "timestamp_end": chunk["timestamp_end"],
+            "event": f"{chunk['log_level']} event detected in {chunk['service']} around lines {chunk['line_start']}-{chunk['line_end']}",
+        })
+
+    return {
+        "incident_summary": "The service failure appears to be caused by errors found in the retrieved log window.",
+        "probable_root_cause": analysis["probable_root_cause"],
+        "detected_patterns": analysis["detected_patterns"],
+        "evidence_lines": evidence_lines,
+        "timeline": timeline,
+        "suggested_fix": [
+            "Increase or tune the database connection pool size.",
+            "Check for connection leaks or long-running database queries.",
+            "Review timeout configuration between the service and database.",
+            "Add alerts for high connection pool usage before exhaustion.",
+            "Review retry behavior to avoid repeated pressure during failure."
+        ],
+        "prevention_steps": [
+            "Monitor connection pool utilization.",
+            "Set alerts for pool usage above 80%.",
+            "Add circuit breakers or backoff for retrying failed requests.",
+            "Track request latency and database timeout rates.",
+            "Load test the service with realistic traffic spikes."
+        ],
+        "confidence_score": analysis["confidence_score"],
+    }    

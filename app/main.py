@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.rag.ingest import parse_log_lines, build_log_chunks
 from app.rag.retriever import retrieve_relevant_chunks
 from app.agent.nodes import analyze_error_pattern
+from app.agent.nodes import analyze_error_pattern, generate_rca_report
 
 app = FastAPI(
     title="AgentOps",
@@ -37,28 +38,33 @@ async def diagnose_logs(
     chunks = build_log_chunks(parsed_lines)
     relevant_chunks = retrieve_relevant_chunks(chunks, question)
     analysis = analyze_error_pattern(relevant_chunks)
+    rca_report = generate_rca_report(analysis, relevant_chunks)
     error_lines = [
     line for line in parsed_lines
     if line["log_level"] in ["ERROR", "WARN"]
 ]
 
     return {
-        "question": question,
-        "filename": log_file.filename,
-        "system_type": system_type,
-        "log_size_chars": len(log_text),
-        "incident_summary": "Initial analysis completed using parsed log evidence.",
-        "suggested_fix": "Review database connection pool sizing, timeout settings, and retry behavior.",        
-        "evidence_lines": [],
-        "suggested_fix": "Next step: implement log ingestion and retrieval.",
-        "confidence_score": 0.0,
+    "question": question,
+    "filename": log_file.filename,
+    "system_type": system_type,
+    "log_size_chars": len(log_text),
+
+    "incident_summary": rca_report["incident_summary"],
+    "probable_root_cause": rca_report["probable_root_cause"],
+    "detected_patterns": rca_report["detected_patterns"],
+    "evidence_lines": rca_report["evidence_lines"],
+    "timeline": rca_report["timeline"],
+    "suggested_fix": rca_report["suggested_fix"],
+    "prevention_steps": rca_report["prevention_steps"],
+    "confidence_score": rca_report["confidence_score"],
+
+    "debug": {
         "total_lines": len(parsed_lines),
         "error_or_warning_count": len(error_lines),
-        "sample_error_lines": error_lines[:3],
         "chunk_count": len(chunks),
+        "sample_error_lines": error_lines[:3],
         "sample_chunks": chunks[:2],
         "relevant_chunks": relevant_chunks,
-        "probable_root_cause": analysis["probable_root_cause"],
-        "confidence_score": analysis["confidence_score"],
-        "detected_patterns": analysis["detected_patterns"],
     }
+}
