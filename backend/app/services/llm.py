@@ -1,28 +1,21 @@
-import os
 import google.generativeai as genai
-from dotenv import load_dotenv
 
-
-load_dotenv()
-
-
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+from app.core.config import settings
 
 
 def is_llm_enabled() -> bool:
-    return bool(GEMINI_API_KEY)
+    return settings.llm_enabled
 
 
 def generate_llm_rca(rca_report: dict) -> str:
-    if not GEMINI_API_KEY:
+    if not is_llm_enabled():
         return ""
 
-    genai.configure(api_key=GEMINI_API_KEY)
+    try:
+        genai.configure(api_key=settings.gemini_api_key)
+        model = genai.GenerativeModel(settings.gemini_model)
 
-    model = genai.GenerativeModel(GEMINI_MODEL)
-
-    prompt = f"""
+        prompt = f"""
 You are an expert Site Reliability Engineer.
 
 Generate a concise, professional Root Cause Analysis report using ONLY the structured evidence below.
@@ -76,5 +69,8 @@ Return the answer in this format:
 ...
 """
 
-    response = model.generate_content(prompt)
-    return response.text.strip()
+        response = model.generate_content(prompt)
+        return response.text.strip()
+
+    except Exception as error:
+        return f"LLM generation failed: {str(error)}"

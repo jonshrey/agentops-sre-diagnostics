@@ -3,17 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.agent.graph import run_diagnostics_graph
 from app.schemas.diagnose import DiagnoseResponse, DiagnoseTextRequest
-
+from app.core.config import settings
 
 app = FastAPI(
-    title="AgentOps",
+    title=settings.app_name,
     description="Autonomous SRE Diagnostics Agent",
-    version="0.1.0",
+    version=settings.app_version,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.cors_allow_origins],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
