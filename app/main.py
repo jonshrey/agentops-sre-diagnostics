@@ -3,6 +3,8 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from app.rag.ingest import parse_log_lines, build_log_chunks
 from app.rag.retriever import retrieve_relevant_chunks
+from app.agent.nodes import analyze_error_pattern
+
 app = FastAPI(
     title="AgentOps",
     description="Autonomous SRE Diagnostics Agent",
@@ -34,6 +36,7 @@ async def diagnose_logs(
     parsed_lines = parse_log_lines(log_text)
     chunks = build_log_chunks(parsed_lines)
     relevant_chunks = retrieve_relevant_chunks(chunks, question)
+    analysis = analyze_error_pattern(relevant_chunks)
     error_lines = [
     line for line in parsed_lines
     if line["log_level"] in ["ERROR", "WARN"]
@@ -44,8 +47,8 @@ async def diagnose_logs(
         "filename": log_file.filename,
         "system_type": system_type,
         "log_size_chars": len(log_text),
-        "incident_summary": "Dummy summary: log file received successfully.",
-        "probable_root_cause": "Dummy root cause: analysis not implemented yet.",
+        "incident_summary": "Initial analysis completed using parsed log evidence.",
+        "suggested_fix": "Review database connection pool sizing, timeout settings, and retry behavior.",        
         "evidence_lines": [],
         "suggested_fix": "Next step: implement log ingestion and retrieval.",
         "confidence_score": 0.0,
@@ -55,4 +58,7 @@ async def diagnose_logs(
         "chunk_count": len(chunks),
         "sample_chunks": chunks[:2],
         "relevant_chunks": relevant_chunks,
+        "probable_root_cause": analysis["probable_root_cause"],
+        "confidence_score": analysis["confidence_score"],
+        "detected_patterns": analysis["detected_patterns"],
     }
