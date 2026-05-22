@@ -15,4 +15,7 @@ class DiagnosticsState(TypedDict, total=False):
     analysis: dict
     rca_report: dict
 
+    needs_docs_search: bool
+    docs_context: list[dict]
+
     workflow_trace: list[str]

@@ -47,6 +47,8 @@ async def diagnose_logs(
         "log_size_chars": len(log_text),
         
         "workflow_trace": graph_result["workflow_trace"],
+        "needs_docs_search": graph_result.get("needs_docs_search", False),
+        "docs_context": graph_result.get("docs_context", []),
 
         
         "incident_summary": rca_report["incident_summary"],

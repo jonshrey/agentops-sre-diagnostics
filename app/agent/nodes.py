@@ -193,4 +193,47 @@ def generate_report_node(state: dict) -> dict:
         **state,
         "rca_report": rca_report,
         "workflow_trace": workflow_trace,
-    } 
+    }
+
+def decide_docs_search_node(state: dict) -> dict:
+    analysis = state["analysis"]
+    confidence_score = analysis.get("confidence_score", 0)
+
+    needs_docs_search = confidence_score < 0.75
+
+    workflow_trace = state.get("workflow_trace", [])
+    workflow_trace.append("decide_docs_search")
+
+    return {
+        **state,
+        "needs_docs_search": needs_docs_search,
+        "workflow_trace": workflow_trace,
+    }
+
+def search_docs_node(state: dict) -> dict:
+    analysis = state["analysis"]
+
+    docs_context = [
+        {
+            "source": "dummy_docs",
+            "title": "Database connection pool troubleshooting",
+            "summary": (
+                "Connection pool exhaustion usually happens when traffic exceeds "
+                "pool capacity, queries hold connections too long, or connections are leaked."
+            ),
+            "recommended_actions": [
+                "Increase max pool size after validating database capacity.",
+                "Check slow queries and connection leaks.",
+                "Use backoff for retries during database pressure.",
+            ],
+        }
+    ]
+
+    workflow_trace = state.get("workflow_trace", [])
+    workflow_trace.append("search_docs")
+
+    return {
+        **state,
+        "docs_context": docs_context,
+        "workflow_trace": workflow_trace,
+    }        
