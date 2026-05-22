@@ -60,3 +60,8 @@ class DiagnoseResponse(BaseModel):
     confidence_score: float
 
     debug: DebugInfo
+
+class DiagnoseTextRequest(BaseModel):
+    question: str
+    log_text: str
+    system_type: str | None = None    
