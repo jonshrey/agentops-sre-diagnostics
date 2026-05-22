@@ -5,3 +5,4 @@ pydantic
 langgraph
 google-generativeai
 python-dotenv
+pytest
