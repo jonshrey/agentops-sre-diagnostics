@@ -1,0 +1,5 @@
+2026-05-22 03:14:01 INFO  auth-service Starting authentication request request_id=req-2001
+2026-05-22 03:14:04 ERROR auth-service TokenValidationException: failed to validate token signature
+2026-05-22 03:14:05 ERROR auth-service Authentication failed for request_id=req-2001
+2026-05-22 03:14:06 WARN  auth-service User session marked invalid request_id=req-2001
+2026-05-22 03:14:10 INFO  auth-service Request ended with failure
