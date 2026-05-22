@@ -2,7 +2,25 @@ from datetime import datetime, timedelta
 import re
 
 
-def extract_time_from_question(question: str) -> datetime | None:
+def extract_base_date_from_chunks(chunks: list[dict]) -> datetime | None:
+    for chunk in chunks:
+        timestamp = chunk.get("timestamp_start")
+
+        if not timestamp:
+            continue
+
+        parsed_timestamp = parse_timestamp(timestamp)
+
+        if parsed_timestamp:
+            return parsed_timestamp
+
+    return None
+
+
+def extract_time_from_question(
+    question: str,
+    base_date: datetime | None = None
+) -> datetime | None:
     question_lower = question.lower()
 
     match = re.search(r"(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", question_lower)
@@ -20,7 +38,15 @@ def extract_time_from_question(question: str) -> datetime | None:
     if meridiem == "am" and hour == 12:
         hour = 0
 
-    return datetime(2026, 5, 22, hour, minute, 0)
+    if base_date is None:
+        return None
+
+    return base_date.replace(
+        hour=hour,
+        minute=minute,
+        second=0,
+        microsecond=0
+    )
 
 
 def parse_timestamp(timestamp: str | None) -> datetime | None:
@@ -63,8 +89,9 @@ def retrieve_relevant_chunks(
     question: str,
     top_k: int = 3
 ) -> list[dict]:
-    target_time = extract_time_from_question(question)
-
+    base_date = extract_base_date_from_chunks(chunks)
+    target_time = extract_time_from_question(question, base_date)
+    
     question_words = set(
         word.lower().strip(".,?!:;")
         for word in question.split()
