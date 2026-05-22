@@ -1,0 +1,12 @@
+.env
+backend/.env
+frontend/.env
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+chroma_db/
+.DS_Store
+.idea/
+.vscode/
