@@ -16,6 +16,20 @@ AgentOps automates the first layer of this workflow.
 
 Given a log file and a question like:
 
+## Demo
+
+### RCA Summary
+
+![AgentOps RCA Summary](assets/streamlit-summary.png)
+
+### Incident Timeline
+
+![AgentOps Timeline](assets/streamlit-timeline.png)
+
+### Evidence-Grounded RCA
+
+![AgentOps Evidence](assets/streamlit-evidence.png)
+
 ```text
 Why did the service fail around 2 AM?
 ```
