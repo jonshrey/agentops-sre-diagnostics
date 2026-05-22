@@ -125,3 +125,57 @@ def generate_rca_report(
         ],
         "confidence_score": analysis["confidence_score"],
     }    
+
+from app.rag.ingest import parse_log_lines, build_log_chunks
+from app.rag.retriever import retrieve_relevant_chunks
+
+
+def parse_and_chunk_logs_node(state: dict) -> dict:
+    parsed_lines = parse_log_lines(state["log_text"])
+
+    error_lines = [
+        line for line in parsed_lines
+        if line["log_level"] in ["ERROR", "WARN"]
+    ]
+
+    chunks = build_log_chunks(parsed_lines)
+
+    return {
+        **state,
+        "parsed_lines": parsed_lines,
+        "error_lines": error_lines,
+        "chunks": chunks,
+    }
+
+
+def retrieve_logs_node(state: dict) -> dict:
+    relevant_chunks = retrieve_relevant_chunks(
+        chunks=state["chunks"],
+        question=state["question"],
+    )
+
+    return {
+        **state,
+        "relevant_chunks": relevant_chunks,
+    }
+
+
+def analyze_patterns_node(state: dict) -> dict:
+    analysis = analyze_error_pattern(state["relevant_chunks"])
+
+    return {
+        **state,
+        "analysis": analysis,
+    }
+
+
+def generate_report_node(state: dict) -> dict:
+    rca_report = generate_rca_report(
+        analysis=state["analysis"],
+        relevant_chunks=state["relevant_chunks"],
+    )
+
+    return {
+        **state,
+        "rca_report": rca_report,
+    }    
