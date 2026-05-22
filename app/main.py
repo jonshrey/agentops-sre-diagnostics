@@ -45,6 +45,10 @@ async def diagnose_logs(
         "filename": log_file.filename,
         "system_type": system_type,
         "log_size_chars": len(log_text),
+        
+        "workflow_trace": graph_result["workflow_trace"],
+
+        
         "incident_summary": rca_report["incident_summary"],
         "probable_root_cause": rca_report["probable_root_cause"],
         "detected_patterns": rca_report["detected_patterns"],

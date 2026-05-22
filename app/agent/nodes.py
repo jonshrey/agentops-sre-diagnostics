@@ -140,13 +140,16 @@ def parse_and_chunk_logs_node(state: dict) -> dict:
 
     chunks = build_log_chunks(parsed_lines)
 
+    workflow_trace = state.get("workflow_trace", [])
+    workflow_trace.append("parse_and_chunk_logs")
+
     return {
         **state,
         "parsed_lines": parsed_lines,
         "error_lines": error_lines,
         "chunks": chunks,
+        "workflow_trace": workflow_trace,
     }
-
 
 def retrieve_logs_node(state: dict) -> dict:
     relevant_chunks = retrieve_relevant_chunks(
@@ -154,18 +157,26 @@ def retrieve_logs_node(state: dict) -> dict:
         question=state["question"],
     )
 
+    workflow_trace = state.get("workflow_trace", [])
+    workflow_trace.append("retrieve_logs")
+
     return {
         **state,
         "relevant_chunks": relevant_chunks,
+        "workflow_trace": workflow_trace,
     }
 
 
 def analyze_patterns_node(state: dict) -> dict:
     analysis = analyze_error_pattern(state["relevant_chunks"])
 
+    workflow_trace = state.get("workflow_trace", [])
+    workflow_trace.append("analyze_patterns")
+
     return {
         **state,
         "analysis": analysis,
+        "workflow_trace": workflow_trace,
     }
 
 
@@ -175,7 +186,11 @@ def generate_report_node(state: dict) -> dict:
         relevant_chunks=state["relevant_chunks"],
     )
 
+    workflow_trace = state.get("workflow_trace", [])
+    workflow_trace.append("generate_report")
+
     return {
         **state,
         "rca_report": rca_report,
-    }    
+        "workflow_trace": workflow_trace,
+    } 

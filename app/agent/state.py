@@ -14,3 +14,5 @@ class DiagnosticsState(TypedDict, total=False):
 
     analysis: dict
     rca_report: dict
+
+    workflow_trace: list[str]

@@ -41,6 +41,7 @@ def run_diagnostics_graph(
         "log_text": log_text,
         "filename": filename,
         "system_type": system_type,
+        "workflow_trace": [],
     }
 
     return diagnostics_graph.invoke(initial_state)
