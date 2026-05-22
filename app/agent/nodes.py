@@ -47,6 +47,41 @@ def analyze_error_pattern(relevant_chunks: list[dict]) -> dict:
         "probable_root_cause": probable_root_cause,
         "confidence_score": confidence_score,
     }
+
+def extract_timeline_events(relevant_chunks: list[dict]) -> list[dict]:
+    seen_lines = set()
+    timeline = []
+
+    for chunk in relevant_chunks:
+        for raw_line in chunk["chunk_text"].splitlines():
+            if raw_line in seen_lines:
+                continue
+
+            seen_lines.add(raw_line)
+
+            parts = raw_line.split(maxsplit=4)
+
+            if len(parts) < 5:
+                continue
+
+            timestamp = f"{parts[0]} {parts[1]}"
+            log_level = parts[2]
+            service = parts[3]
+            message = parts[4]
+
+            if log_level not in ["WARN", "ERROR"]:
+                continue
+
+            timeline.append({
+                "timestamp": timestamp,
+                "log_level": log_level,
+                "service": service,
+                "event": message,
+            })
+
+    timeline.sort(key=lambda item: item["timestamp"])
+
+    return timeline    
     
 def generate_rca_report(
     analysis: dict,
@@ -65,14 +100,8 @@ def generate_rca_report(
             "retrieval_score": chunk.get("retrieval_score", 0),
         })
 
-    timeline = []
-
-    for chunk in relevant_chunks:
-        timeline.append({
-            "timestamp_start": chunk["timestamp_start"],
-            "timestamp_end": chunk["timestamp_end"],
-            "event": f"{chunk['log_level']} event detected in {chunk['service']} around lines {chunk['line_start']}-{chunk['line_end']}",
-        })
+    timeline = extract_timeline_events(relevant_chunks)
+    
 
     return {
         "incident_summary": "The service failure appears to be caused by errors found in the retrieved log window.",
