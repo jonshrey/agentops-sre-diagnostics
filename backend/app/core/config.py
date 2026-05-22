@@ -17,6 +17,7 @@ class Settings:
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
     cors_allow_origins: str = os.getenv("CORS_ALLOW_ORIGINS", "*")
+    log_level: str = os.getenv("LOG_LEVEL", "INFO")
 
     @property
     def llm_enabled(self) -> bool:

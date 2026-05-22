@@ -2,8 +2,13 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.agent.graph import run_diagnostics_graph
-from app.schemas.diagnose import DiagnoseResponse, DiagnoseTextRequest
 from app.core.config import settings
+from app.core.logger import get_logger
+from app.schemas.diagnose import DiagnoseResponse, DiagnoseTextRequest
+
+
+logger = get_logger(__name__)
+
 
 app = FastAPI(
     title=settings.app_name,
@@ -34,6 +39,13 @@ def build_diagnose_response(
     )
 
     rca_report = graph_result["rca_report"]
+
+    logger.info(
+        "Diagnostics completed: filename=%s confidence=%s needs_docs_search=%s",
+        filename,
+        rca_report["confidence_score"],
+        graph_result.get("needs_docs_search", False),
+    )
 
     return {
         "question": question,
@@ -73,6 +85,7 @@ def build_diagnose_response(
 
 @app.get("/health")
 def health_check():
+    logger.info("Health check requested")
     return {"status": "ok"}
 
 
@@ -82,6 +95,12 @@ async def diagnose_logs(
     log_file: UploadFile = File(...),
     system_type: str | None = Form(default=None),
 ):
+    logger.info(
+        "Received file-based diagnose request: filename=%s system_type=%s",
+        log_file.filename,
+        system_type,
+    )
+
     content = await log_file.read()
     log_text = content.decode("utf-8", errors="ignore")
 
@@ -95,6 +114,12 @@ async def diagnose_logs(
 
 @app.post("/diagnose-text", response_model=DiagnoseResponse)
 def diagnose_text(payload: DiagnoseTextRequest):
+    logger.info(
+        "Received text-based diagnose request: system_type=%s chars=%s",
+        payload.system_type,
+        len(payload.log_text),
+    )
+
     return build_diagnose_response(
         question=payload.question,
         log_text=payload.log_text,
