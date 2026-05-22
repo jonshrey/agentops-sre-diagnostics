@@ -220,21 +220,75 @@ def decide_docs_search_node(state: dict) -> dict:
 
 
 def search_docs_node(state: dict) -> dict:
-    docs_context = [
-        {
-            "source": "dummy_docs",
-            "title": "Database connection pool troubleshooting",
-            "summary": (
-                "Connection pool exhaustion usually happens when traffic exceeds "
-                "pool capacity, queries hold connections too long, or connections are leaked."
-            ),
-            "recommended_actions": [
-                "Increase max pool size after validating database capacity.",
-                "Check slow queries and connection leaks.",
-                "Use backoff for retries during database pressure.",
-            ],
-        }
-    ]
+    combined_text = "\n".join(
+        chunk["chunk_text"] for chunk in state.get("relevant_chunks", [])
+    ).lower()
+
+    if (
+        "token" in combined_text
+        or "authentication" in combined_text
+        or "auth" in combined_text
+        or "signature" in combined_text
+    ):
+        docs_context = [
+            {
+                "source": "internal_runbook",
+                "title": "Authentication and token validation troubleshooting",
+                "summary": (
+                    "Token validation failures commonly occur when signing keys are rotated, "
+                    "JWT algorithms do not match, tokens are expired, or services are using stale public keys."
+                ),
+                "recommended_actions": [
+                    "Verify that the token signing key and public verification key match.",
+                    "Check whether auth keys were recently rotated.",
+                    "Validate token expiry, issuer, audience, and signature algorithm.",
+                    "Confirm that all services are using the latest auth configuration.",
+                    "Inspect recent deployment or config changes in the auth service.",
+                ],
+            }
+        ]
+
+    elif (
+        "dbconnectionpoolexhausted" in combined_text
+        or "connection pool" in combined_text
+        or "database" in combined_text
+        or "db" in combined_text
+    ):
+        docs_context = [
+            {
+                "source": "internal_runbook",
+                "title": "Database connection pool troubleshooting",
+                "summary": (
+                    "Connection pool exhaustion usually happens when traffic exceeds pool capacity, "
+                    "queries hold connections too long, or connections are leaked."
+                ),
+                "recommended_actions": [
+                    "Increase max pool size after validating database capacity.",
+                    "Check slow queries and connection leaks.",
+                    "Use backoff for retries during database pressure.",
+                    "Add alerts for high connection pool usage.",
+                ],
+            }
+        ]
+
+    else:
+        docs_context = [
+            {
+                "source": "internal_runbook",
+                "title": "Generic service failure troubleshooting",
+                "summary": (
+                    "Unknown service failures should be investigated by checking recent deployments, "
+                    "configuration changes, dependency health, resource saturation, and repeated error patterns."
+                ),
+                "recommended_actions": [
+                    "Check recent deployments or configuration changes.",
+                    "Inspect dependency health and timeout rates.",
+                    "Review CPU, memory, and network saturation metrics.",
+                    "Group repeated errors by request ID or trace ID.",
+                    "Escalate with full logs and timeline if root cause remains unclear.",
+                ],
+            }
+        ]
 
     workflow_trace = state.get("workflow_trace", [])
     workflow_trace.append("search_docs")
@@ -244,7 +298,6 @@ def search_docs_node(state: dict) -> dict:
         "docs_context": docs_context,
         "workflow_trace": workflow_trace,
     }
-
 
 def generate_report_node(state: dict) -> dict:
     rca_report = generate_rca_report(
